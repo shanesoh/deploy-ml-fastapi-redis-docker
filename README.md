@@ -13,7 +13,7 @@ Make sure you have a modern version of `docker` (>1.13.0)and `docker-compose` in
 docker-compose build
 ```
 
-* Using Docker Swarm requires that these built images are pushed to a registry (so that Swarm can distribute the images to all the Dockr Engines in a swarm). We'll use a local Docker registry for this purpose. We can use the official Docker `registry` image to start one:
+* Using Docker Swarm requires that these built images are pushed to a registry (so that Swarm can distribute the images to all the Docker Engines in a swarm). We'll use a local Docker registry for this purpose. We can use the official Docker `registry` image to start one:
 
 ```bash
 docker run -d -p 5000:5000 --restart=always --name registry registry:2
