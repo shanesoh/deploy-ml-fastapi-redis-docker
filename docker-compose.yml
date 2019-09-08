@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  redis:
+    image: redis
+    networks:
+    - deployml_network
+
+  modelserver:
+    image: localhost:5000/modelserver
+    build: ./modelserver
+    depends_on:
+    - redis
+    networks:
+    - deployml_network
+    env_file:
+    - app.env
+    environment:
+    - SERVER_SLEEP=0.25
+    - BATCH_SIZE=32
+    deploy:
+      replicas: 2
+      restart_policy:
+        condition: on-failure
+
+  webserver:
+    image: localhost:5000/webserver
+    build: ./webserver
+    ports:
+    - "80:80"
+    networks:
+    - deployml_network
+    depends_on:
+    - redis
+    env_file:
+    - app.env
+    environment:
+    - CLIENT_SLEEP=0.25
+
+networks:
+    deployml_network:
