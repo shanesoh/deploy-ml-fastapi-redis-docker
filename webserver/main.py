@@ -23,6 +23,7 @@ from starlette.requests import Request
 app = FastAPI()
 db = redis.StrictRedis(host=os.environ.get("REDIS_HOST"))
 
+
 def prepare_image(image, target):
     # If the image mode is not RGB, convert it
     if image.mode != "RGB":
@@ -37,9 +38,11 @@ def prepare_image(image, target):
     # Return the processed image
     return image
 
+
 @app.get("/")
 def index():
-	return "Hello World!"
+    return "Hello World!"
+
 
 @app.post("/predict")
 def predict(request: Request, img_file: bytes=File(...)):

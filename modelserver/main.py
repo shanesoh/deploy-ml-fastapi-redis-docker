@@ -22,30 +22,33 @@ db = redis.StrictRedis(host=os.environ.get("REDIS_HOST"))
 # substitute in your own networks just as easily)
 model = ResNet50(weights="imagenet")
 
+
 def base64_decode_image(a, dtype, shape):
-	# If this is Python 3, we need the extra step of encoding the
-	# serialized NumPy string as a byte object
-	if sys.version_info.major == 3:
-		a = bytes(a, encoding="utf-8")
+    # If this is Python 3, we need the extra step of encoding the
+    # serialized NumPy string as a byte object
+    if sys.version_info.major == 3:
+        a = bytes(a, encoding="utf-8")
 
-	# Convert the string to a NumPy array using the supplied data
-	# type and target shape
-	a = np.frombuffer(base64.decodestring(a), dtype=dtype)
-	a = a.reshape(shape)
+    # Convert the string to a NumPy array using the supplied data
+    # type and target shape
+    a = np.frombuffer(base64.decodestring(a), dtype=dtype)
+    a = a.reshape(shape)
 
-	# Return the decoded image
-	return a
+    # Return the decoded image
+    return a
+
 
 def classify_process():
     # Continually poll for new images to classify
     while True:
-        # Attempt to grab a batch of images from the database, then initialize the image IDs and batch of images
-        # themselves
-        queue = db.lrange(os.environ.get("IMAGE_QUEUE"), 0, int(os.environ.get("BATCH_SIZE")) - 1)
+        # Pop off multiple images from Redis queue atomically
+        with db.pipeline() as pipe:
+            queue = pipe.lrange(os.environ.get("IMAGE_QUEUE"), 0, int(os.environ.get("BATCH_SIZE")) - 1)
+            pipe.ltrim(os.environ.get("IMAGE_QUEUE"), len(queue), -1)
+            pipe.execute()
+
         imageIDs = []
         batch = None
-
-        # Loop over the queue
         for q in queue:
             # Deserialize the object and obtain the input image
             q = json.loads(q.decode("utf-8"))
@@ -86,9 +89,6 @@ def classify_process():
 
                 # Store the output predictions in the database, using image ID as the key so we can fetch the results
                 db.set(imageID, json.dumps(output))
-
-            # Remove the set of images from our queue
-            db.ltrim(os.environ.get("IMAGE_QUEUE"), len(imageIDs), -1)
 
         # Sleep for a small amount
         time.sleep(float(os.environ.get("SERVER_SLEEP")))
