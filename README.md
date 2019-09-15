@@ -6,27 +6,22 @@ Serve a production-ready and scalable Keras-based deep learning model image clas
 ### Prerequisites
 Make sure you have a modern version of `docker` (>1.13.0)and `docker-compose` installed.
 
-### Build Images
-* In project directory, use `docker-compose` to build the images:
+### Run with Docker Compose
+Simply run `docker-compose up` to spin up all the services on your local machine.
+
+### Test Service
+* Test the `/predict` endpoint by passing in the included `doge.jpg` as parameter `img_file`:
 
 ```bash
-docker-compose build
+curl -X POST -F img_file=@doge.jpg http://localhost/predict
 ```
 
-* Using Docker Swarm requires that these built images are pushed to a registry (so that Swarm can distribute the images to all the Dockr Engines in a swarm). We'll use a local Docker registry for this purpose. We can use the official Docker `registry` image to start one:
+You should see the predictions returned as a JSON response.
 
-```bash
-docker run -d -p 5000:5000 --restart=always --name registry registry:2
-```
+### Deploy on Docker Swarm
+Deploying this on Docker Swarm allows us to scale the model server to multiple hosts. 
 
-* Now we can push our newly built images to the registry:
-
-```bash
-docker-compose push
-```
-
-### Deploy Images to a Docker Swarm
-* Assuming you're testing this in a local environment, make sure your engine is in swarm mode with `docker swarm init`.
+This assumes that you have a Swarm instance set up (e.g. on the cloud). Otherwise, to test this in a local environment, put your Docker engine in swarm mode with `docker swarm init`.
 
 * Deploy the stack on the swarm:
 
@@ -34,23 +29,13 @@ docker-compose push
 docker stack deploy -c docker-compose.yml mldeploy
 ```
 
-* Check that it's running with `docker stack services mldeploy`. Notice that the model server is replicated twice. You can increase this to handle more requests but ensure your server has sufficient resources (RAM and CPU) to handle the replication.
-
-
-### Test Service
-* Test the service by `curl`ing the endpoint:
+* Check that it's running with `docker stack services mldeploy`. Note that the model server is unreplicated at this time. You may scale up the model worker by:
 
 ```bash
-curl http://localhost
+docker service scale mldeploy_modelserver=X
 ```
 
-You should see `"Hello World!"` as a response.
-
-* Test the `/predict` endpoint by passing in the included `doge.jpg` as parameter `img_file`:
-
-```bash
-curl -X POST -F img_file=@doge.jpg http://localhost/predict
-```
+Where `X` is the number of workers you want.
 
 ## Load Testing
 We can use [locust](https://locust.io) and the included `locustfile.py` to load test our service. Run the following command to spin up `20` concurrent users immediately:

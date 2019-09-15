@@ -7,7 +7,7 @@ services:
     - deployml_network
 
   modelserver:
-    image: localhost:5000/modelserver
+    image: shanesoh/modelserver
     build: ./modelserver
     depends_on:
     - redis
@@ -16,15 +16,18 @@ services:
     env_file:
     - app.env
     environment:
-    - SERVER_SLEEP=0.25
+    - SERVER_SLEEP=0.25  # Time in ms between each poll by model server against Redis
     - BATCH_SIZE=32
     deploy:
-      replicas: 2
+      replicas: 1
       restart_policy:
         condition: on-failure
+      placement:
+        constraints:
+        - node.role == worker
 
   webserver:
-    image: localhost:5000/webserver
+    image: shanesoh/webserver
     build: ./webserver
     ports:
     - "80:80"
@@ -35,7 +38,12 @@ services:
     env_file:
     - app.env
     environment:
-    - CLIENT_SLEEP=0.25
+    - CLIENT_SLEEP=0.25  # Time in ms between each poll by web server against Redis
+    - CLIENT_MAX_TRIES=100  # Num tries by web server to retrieve results from Redis before giving up
+    deploy:
+      placement:
+        constraints:
+        - node.role == manager
 
 networks:
     deployml_network:

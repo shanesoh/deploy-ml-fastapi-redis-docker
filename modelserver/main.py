@@ -43,7 +43,6 @@ def classify_process():
     while True:
         # Pop off multiple images from Redis queue atomically
         with db.pipeline() as pipe:
-            pipe.multi()
             pipe.lrange(os.environ.get("IMAGE_QUEUE"), 0, int(os.environ.get("BATCH_SIZE")) - 1)
             pipe.ltrim(os.environ.get("IMAGE_QUEUE"), int(os.environ.get("BATCH_SIZE")), -1)
             queue, _ = pipe.execute()
