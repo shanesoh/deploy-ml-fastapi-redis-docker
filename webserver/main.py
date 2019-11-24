@@ -1,5 +1,5 @@
 """
-Web server script that exposes REST endpoint and pushes images to Redis for classification by model server. Polls
+Web server script that exposes endpoints and pushes images to Redis for classification by model server. Polls
 Redis for response from model server.
 
 Adapted from https://www.pyimagesearch.com/2018/02/05/deep-learning-production-keras-redis-flask-apache/
