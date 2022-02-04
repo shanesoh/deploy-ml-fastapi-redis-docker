@@ -5,7 +5,7 @@ COPY requirements.txt /app/
 RUN pip install -r /app/requirements.txt
 
 # Download ResNet50 model and cache in image
-RUN python -c "from keras.applications import ResNet50; ResNet50(weights='imagenet')"
+RUN python -c "from tensorflow.keras.applications.resnet50 import ResNet50; ResNet50(weights='imagenet')"
 
 COPY . /app
 
